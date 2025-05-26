@@ -5,6 +5,7 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\FavoriteController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas públicas
