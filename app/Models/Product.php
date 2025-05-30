@@ -10,11 +10,11 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'slug', 'description', 'price', 'stock', 'type', 'is_featured', 'is_active', 'category_id'
+        'name', 'description', 'price', 'image', 'stock', 'category_id'
     ];
 
-    public function favorites()
+    public function category()
     {
-        return $this->hasMany(Favorite::class);
+        return $this->belongsTo(Category::class);
     }
 }

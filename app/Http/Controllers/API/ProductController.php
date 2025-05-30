@@ -1,142 +1,71 @@
 <?php
 
 namespace App\Http\Controllers\API;
-
 use App\Http\Controllers\Controller;
+
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the active products.
-     */
+    // Mostrar todos los productos
     public function index()
     {
-        $products = Product::where('is_active', true)->get();
-        return response()->json([
-            'success' => true,
-            'data'    => $products
-        ], 200);
+        $products = Product::with('category')->get();
+        return response()->json($products);
     }
 
-    /**
-     * Store a newly created product in storage.
-     */
+    // Mostrar un producto específico
+    public function show($id)
+    {
+        $product = Product::with('category')->findOrFail($id);
+        return response()->json($product);
+    }
+
+    // Crear un nuevo producto 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name'         => 'required|string|max:255',
-            'slug'         => 'required|string|max:255|unique:products',
-            'description'  => 'nullable|string',
-            'price'        => 'required|numeric|min:0',
-            'stock'        => 'required|integer|min:0',
-            'type'         => 'required|string|max:255',
-            'is_featured'  => 'nullable|boolean',
-            'is_active'    => 'nullable|boolean',
-            'category_id'  => 'required|exists:categories,id',
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric',
+            'image' => 'nullable|string',
+            'stock' => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors'  => $validator->errors()
-            ], 422);
-        }
+        $product = Product::create($request->only([
+            'name', 'description', 'price', 'image', 'stock', 'category_id'
+        ]));
 
-        $product = Product::create($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product created successfully',
-            'data'    => $product
-        ], 201);
+        return response()->json($product, 201);
     }
 
-    /**
-     * Display the specified product.
-     */
-    public function show(string $id)
+    // Actualizar un producto (opcional)
+    public function update(Request $request, $id)
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data'    => $product
-        ], 200);
-    }
-
-    /**
-     * Update the specified product in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $product = Product::find($id);
-
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name'         => 'sometimes|required|string|max:255',
-            'slug'         => 'sometimes|required|string|max:255|unique:products,slug,' . $product->id,
-            'description'  => 'nullable|string',
-            'price'        => 'sometimes|required|numeric|min:0',
-            'stock'        => 'sometimes|required|integer|min:0',
-            'type'         => 'sometimes|required|string|max:255',
-            'is_featured'  => 'nullable|boolean',
-            'is_active'    => 'nullable|boolean',
-            'category_id'  => 'sometimes|required|exists:categories,id',
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'sometimes|numeric',
+            'image' => 'nullable|string',
+            'stock' => 'sometimes|integer|min:0',
+            'category_id' => 'sometimes|exists:categories,id',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors'  => $validator->errors()
-            ], 422);
-        }
+        $product = Product::findOrFail($id);
+        $product->update($request->only([
+            'name', 'description', 'price', 'image', 'stock', 'category_id'
+        ]));
 
-        $product->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product updated successfully',
-            'data'    => $product
-        ], 200);
+        return response()->json($product);
     }
 
-    /**
-     * Remove the specified product from storage.
-     */
-    public function destroy(string $id)
+    // Eliminar un producto (opcional)
+    public function destroy($id)
     {
-        $product = Product::find($id);
-
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
-
+        $product = Product::findOrFail($id);
         $product->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product deleted successfully'
-        ], 200);
+        return response()->json(['message' => 'Producto eliminado correctamente']);
     }
 }
